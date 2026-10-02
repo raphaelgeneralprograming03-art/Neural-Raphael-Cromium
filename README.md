@@ -2,170 +2,310 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Neural-Raphael-Cromium | Browser Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural-Raphael-Cromium | Next-Gen Browser</title>
     <style>
-        /* CSS3 - Design Sistema Rocho e Lilás (Chromium Style) */
         :root {
-            --primary-purple: #4B0082;
-            --lilac-light: #E6E6FA;
-            --lilac-dark: #9370DB;
-            --chrome-bg: #F1F3F4;
-            --dark-red: #8B0000;
-            --black: #000000;
+            --bg-color: #0f0f12;
+            --toolbar-color: #1e1e24;
+            --accent-color: #00d4ff;
+            --text-color: #e0e0e0;
+            --tab-inactive: #2d2d35;
         }
 
         body, html {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100%; overflow: hidden;
-            background-color: var(--lilac-light);
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
         }
 
-        /* Barra de Navegação Superior */
-        #nav-bar {
-            background-color: var(--primary-purple);
-            padding: 8px;
+        /* Toolbar / Address Bar */
+        #browser-ui {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--toolbar-color);
+            padding: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-bottom: 1px solid #333;
+            z-index: 10;
         }
 
-        #logo-container { width: 40px; height: 40px; }
+        .nav-buttons { display: flex; gap: 5px; }
+        
+        button {
+            background: #333;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover { background: var(--accent-color); }
 
         #address-bar {
             flex-grow: 1;
-            padding: 10px;
+            background: #000;
+            border: 1px solid #444;
+            padding: 8px 15px;
             border-radius: 20px;
-            border: none;
-            background-color: white;
+            color: var(--accent-color);
             outline: none;
         }
 
-        /* Menu de Configuração */
-        #settings-menu {
-            position: absolute;
-            right: 10px; top: 60px;
-            width: 250px;
+        /* Tabs System */
+        #tabs-bar {
+            display: flex;
+            background: #15151a;
+            padding: 5px 10px 0 10px;
+            gap: 5px;
+        }
+
+        .tab {
+            background: var(--tab-inactive);
+            padding: 8px 20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 120px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tab.active {
+            background: var(--toolbar-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        /* Viewport */
+        #viewport {
+            flex-grow: 1;
             background: white;
-            border: 1px solid var(--lilac-dark);
-            border-radius: 8px;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* OVERVIEW OVERLAY (CANVAS) */
+        #overview-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
             display: none;
             z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
 
-        .menu-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            color: var(--primary-purple);
-        }
-
-        .menu-item:hover { background-color: var(--lilac-light); }
-
-        /* Área do Navegador */
-        #viewport {
+        canvas {
             width: 100%;
-            height: calc(100vh - 60px);
-            border: none;
-            background: white;
+            height: 100%;
         }
 
-        /* Botões Estilizados */
-        .btn {
-            color: white;
-            cursor: pointer;
+        .overlay-instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-color);
             font-weight: bold;
-            padding: 5px 10px;
         }
     </style>
 </head>
 <body>
 
-    <div id="nav-bar">
-        <div id="logo-container">
-            <canvas id="logoCanvas" width="40" height="40"></canvas>
+    <div id="browser-ui">
+        <div id="tabs-bar">
+            <!-- Abas serão injetadas aqui -->
         </div>
-        <div class="btn" onclick="goBack()">◀</div>
-        <div class="btn" onclick="goForward()">▶</div>
-        <div class="btn" onclick="reload()">↻</div>
-        <input type="text" id="address-bar" placeholder="Pesquisar na Neural-Raphael-Web ou digitar URL" onkeydown="handleUrl(event)">
-        <div class="btn" onclick="toggleMenu()" style="font-size: 20px;">⋮</div>
+
+        <header>
+            <div class="nav-buttons">
+                <button onclick="toggleOverview()">🔳 Overview</button>
+                <button onclick="addTab()">➕</button>
+            </div>
+            <input type="text" id="address-bar" value="https://neural-raphael.ai/welcome" onkeydown="handleUrl(event)">
+        </header>
+
+        <main id="viewport">
+            <!-- Iframe de conteúdo -->
+            <div id="active-content" style="height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; color: #333;">
+                <h1>Neural-Raphael-Cromium Core</h1>
+                <p>Aguardando navegação...</p>
+            </div>
+        </main>
     </div>
 
-    <div id="settings-menu">
-        <div class="menu-item"><b>Configurações do Chromium</b></div>
-        <div class="menu-item" onclick="window.open('https://source.chromium.org')">Source Chromium Code</div>
-        <div class="menu-item">Histórico de Algoritmos</div>
-        <div class="menu-item">Privacidade Neural</div>
-        <div class="menu-item">Sobre o Neural-Raphael</div>
+    <!-- Visão Geral do Aplicativo -->
+    <div id="overview-overlay">
+        <canvas id="overview-canvas"></canvas>
+        <div class="overlay-instruction">Visão Geral: Clique em uma janela para alternar</div>
     </div>
-
-    <iframe id="viewport" src="https://www.google.com/search?q=Neural+Raphael+Chromium"></iframe>
 
     <script>
-        /* JavaScript & Canvas 2D - Algoritmo da Logo */
-        const canvas = document.getElementById('logoCanvas');
+        const canvas = document.getElementById('overview-canvas');
         const ctx = canvas.getContext('2d');
+        const overviewOverlay = document.getElementById('overview-overlay');
+        
+        let tabs = [
+            { id: 1, title: 'Neural Home', url: 'https://neural.ai', color: '#00d4ff' },
+            { id: 2, title: 'Google', url: 'https://google.com', color: '#4285f4' },
+            { id: 3, title: 'GitHub Source', url: 'https://github.com', color: '#333' }
+        ];
+        let activeTabId = 1;
 
-        function drawLogo() {
-            const cx = 20, cy = 20, r = 18;
-            
-            // Círculo Central (Preto)
-            ctx.beginPath();
-            ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-            ctx.fillStyle = "#000000";
-            ctx.fill();
-
-            // Segmentos (Vermelho Escuro) - Estilo Chromium
-            ctx.strokeStyle = "#8B0000";
-            ctx.lineWidth = 4;
-            for(let i=0; i<3; i++) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, r, i*2, i*2 + 1.5);
-                ctx.stroke();
-            }
+        // Inicialização
+        function init() {
+            renderTabs();
+            resizeCanvas();
         }
-        drawLogo();
 
-        /* Lógica de Navegação */
+        function renderTabs() {
+            const tabsBar = document.getElementById('tabs-bar');
+            tabsBar.innerHTML = '';
+            tabs.forEach(tab => {
+                const tabEl = document.createElement('div');
+                tabEl.className = `tab ${tab.id === activeTabId ? 'active' : ''}`;
+                tabEl.innerHTML = `<span>${tab.title}</span>`;
+                tabEl.onclick = () => switchTab(tab.id);
+                tabsBar.appendChild(tabEl);
+            });
+        }
+
+        function switchTab(id) {
+            activeTabId = id;
+            const tab = tabs.find(t => t.id === id);
+            document.getElementById('address-bar').value = tab.url;
+            document.getElementById('active-content').style.background = tab.color + '22';
+            renderTabs();
+            overviewOverlay.style.display = 'none';
+        }
+
+        function addTab() {
+            const newId = tabs.length + 1;
+            tabs.push({ id: newId, title: 'Nova Aba', url: 'about:blank', color: '#555' });
+            switchTab(newId);
+        }
+
         function handleUrl(e) {
             if (e.key === 'Enter') {
-                let url = document.getElementById('address-bar').value;
-                if (!url.startsWith('http')) url = 'https://' + url;
-                document.getElementById('viewport').src = url;
+                const tab = tabs.find(t => t.id === activeTabId);
+                tab.url = e.target.value;
+                tab.title = "Carregando...";
+                renderTabs();
             }
         }
 
-        function toggleMenu() {
-            const menu = document.getElementById('settings-menu');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        // --- VISÃO GERAL (CANVAS 2D) ---
+        
+        function toggleOverview() {
+            overviewOverlay.style.display = 'block';
+            drawOverview();
         }
 
-        // Simulação de comandos C++ via Console para integração
-        console.log("Neural-Raphael-Cromium Kernel initialized...");
-        console.log("Connecting to source.chromium.org algorithms...");
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function drawOverview() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const cardWidth = 300;
+            const cardHeight = 200;
+            const gap = 40;
+            let x = 100;
+            let y = 100;
+
+            tabs.forEach((tab, index) => {
+                // Desenhar sombra
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "rgba(0, 212, 255, 0.3)";
+
+                // Desenhar Moldura da Janela
+                ctx.fillStyle = "#1e1e24";
+                ctx.beginPath();
+                ctx.roundRect(x, y, cardWidth, cardHeight, 10);
+                ctx.fill();
+
+                // Cabeçalho da Miniatura
+                ctx.fillStyle = tab.color;
+                ctx.beginPath();
+                ctx.roundRect(x, y, cardWidth, 30, [10, 10, 0, 0]);
+                ctx.fill();
+
+                // Texto do Título
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "white";
+                ctx.font = "14px Arial";
+                ctx.fillText(tab.title, x + 15, y + 20);
+
+                // Corpo da Janela (Simulando Conteúdo)
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(x + 10, y + 40, cardWidth - 20, cardHeight - 50);
+
+                // Linhas simulando texto/layout
+                ctx.fillStyle = "#ddd";
+                for(let i=0; i<5; i++) {
+                    ctx.fillRect(x + 20, y + 60 + (i*20), cardWidth - 60, 10);
+                }
+
+                // Identificador de Aba Ativa
+                if(tab.id === activeTabId) {
+                    ctx.strokeStyle = varColor('--accent-color');
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x - 5, y - 5, cardWidth + 10, cardHeight + 10);
+                }
+
+                // Guardar posição para clique
+                tab.rect = { x, y, w: cardWidth, h: cardHeight };
+
+                x += cardWidth + gap;
+                if (x + cardWidth > canvas.width) {
+                    x = 100;
+                    y += cardHeight + gap;
+                }
+            });
+        }
+
+        // Detectar clique no Canvas para selecionar aba
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            tabs.forEach(tab => {
+                if (mouseX >= tab.rect.x && mouseX <= tab.rect.x + tab.rect.w &&
+                    mouseY >= tab.rect.y && mouseY <= tab.rect.y + tab.rect.h) {
+                    switchTab(tab.id);
+                }
+            });
+        });
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        window.onresize = resizeCanvas;
+        init();
     </script>
-
-    <!-- 
-    ALGORITMO PYTHON PARA INTEGRAÇÃO (COMENTADO PARA RODAR NO GITHUB)
-    Para transformar este HTML em um navegador real no seu PC:
-    
-    import sys
-    from PyQt5.QtWidgets import QApplication, QMainWindow
-    from PyQt5.QtWebEngineWidgets import QWebEngineView
-    from PyQt5.QtCore import QUrl
-
-    class NeuralRaphaelCromium(QMainWindow):
-        def __init__(self):
-            super().__init__()
-            self.browser = QWebEngineView()
-            self.browser.setUrl(QUrl("https://source.chromium.org"))
-            self.setCentralWidget(self.browser)
-            self.setWindowTitle("Neural-Raphael-Cromium v1.0")
-
-    # Para executar, instale: pip install PyQt5 PyQtWebEngine
-    -->
 </body>
 </html>
