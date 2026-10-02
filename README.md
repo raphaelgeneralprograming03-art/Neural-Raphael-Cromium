@@ -2,198 +2,170 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NeonTor - Private Browser Engine</title>
+    <title>Neural-Raphael-Cromium | Browser Engine</title>
     <style>
+        /* CSS3 - Design Sistema Rocho e Lilás (Chromium Style) */
         :root {
-            --primary: #00ff41; /* Verde Matrix */
-            --bg: #0a0a0a;
-            --surface: #1a1a1a;
-            --accent: #ff0055; /* Cor alternativa solicitada */
+            --primary-purple: #4B0082;
+            --lilac-light: #E6E6FA;
+            --lilac-dark: #9370DB;
+            --chrome-bg: #F1F3F4;
+            --dark-red: #8B0000;
+            --black: #000000;
         }
 
         body, html {
             margin: 0; padding: 0;
-            background: var(--bg);
-            color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            height: 100%; overflow: hidden;
+            background-color: var(--lilac-light);
         }
 
-        #bgCanvas {
-            position: fixed; top: 0; left: 0; z-index: -1;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            height: 100vh;
-        }
-
-        /* Sidebar */
-        nav {
-            background: rgba(20, 20, 20, 0.9);
-            border-right: 1px solid var(--accent);
-            padding: 20px;
-        }
-
-        .status-dot {
-            height: 10px; width: 10px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        /* Browser Area */
-        main {
+        /* Barra de Navegação Superior */
+        #nav-bar {
+            background-color: var(--primary-purple);
+            padding: 8px;
             display: flex;
-            flex-direction: column;
-            padding: 10px;
-        }
-
-        .address-bar {
-            background: var(--surface);
-            padding: 10px;
-            border-radius: 8px;
-            display: flex;
+            align-items: center;
             gap: 10px;
-            border: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        input {
-            flex: 1;
-            background: transparent;
+        #logo-container { width: 40px; height: 40px; }
+
+        #address-bar {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 20px;
             border: none;
-            color: white;
+            background-color: white;
             outline: none;
         }
 
-        .view-port {
-            flex: 1;
-            margin-top: 15px;
+        /* Menu de Configuração */
+        #settings-menu {
+            position: absolute;
+            right: 10px; top: 60px;
+            width: 250px;
             background: white;
+            border: 1px solid var(--lilac-dark);
             border-radius: 8px;
-            color: black;
-            overflow: hidden;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        .stats-panel {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #888;
-        }
-
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 5px 15px;
+        .menu-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
-            border-radius: 4px;
+            color: var(--primary-purple);
+        }
+
+        .menu-item:hover { background-color: var(--lilac-light); }
+
+        /* Área do Navegador */
+        #viewport {
+            width: 100%;
+            height: calc(100vh - 60px);
+            border: none;
+            background: white;
+        }
+
+        /* Botões Estilizados */
+        .btn {
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 5px 10px;
         }
     </style>
 </head>
 <body>
 
-<canvas id="bgCanvas"></canvas>
-
-<div class="container">
-    <nav>
-        <h2>NeonTor</h2>
-        <p><span class="status-dot"></span> Rede: Conectada</p>
-        <hr style="border: 0.5px solid #333">
-        <div class="stats-panel">
-            <p><strong>Circuito Tor:</strong></p>
-            <p>🇧🇷 Brasil -> 🇩🇪 Alemanha -> 🇺🇸 USA</p>
-            <p>IP: 192.XXX.XXX.XXX</p>
+    <div id="nav-bar">
+        <div id="logo-container">
+            <canvas id="logoCanvas" width="40" height="40"></canvas>
         </div>
-        <div style="margin-top: 50px;">
-            <small>Linguagens Ativas:</small><br>
-            <span style="color: #f34b7d;">C++ Core</span><br>
-            <span style="color: #3572A5;">Python Proxy</span><br>
-            <span style="color: #f1e05a;">JS Canvas</span>
-        </div>
-    </nav>
+        <div class="btn" onclick="goBack()">◀</div>
+        <div class="btn" onclick="goForward()">▶</div>
+        <div class="btn" onclick="reload()">↻</div>
+        <input type="text" id="address-bar" placeholder="Pesquisar na Neural-Raphael-Web ou digitar URL" onkeydown="handleUrl(event)">
+        <div class="btn" onclick="toggleMenu()" style="font-size: 20px;">⋮</div>
+    </div>
 
-    <main>
-        <div class="address-bar">
-            <button>←</button>
-            <button>→</button>
-            <input type="text" id="urlInput" placeholder="Digite .onion ou endereço Surface Web...">
-            <button onclick="navigate()">IR</button>
-        </div>
+    <div id="settings-menu">
+        <div class="menu-item"><b>Configurações do Chromium</b></div>
+        <div class="menu-item" onclick="window.open('https://source.chromium.org')">Source Chromium Code</div>
+        <div class="menu-item">Histórico de Algoritmos</div>
+        <div class="menu-item">Privacidade Neural</div>
+        <div class="menu-item">Sobre o Neural-Raphael</div>
+    </div>
 
-        <div class="view-port" id="browserView">
-            <div style="padding: 50px; text-align: center;">
-                <h1 style="color: #333">Bem-vindo ao NeonTor</h1>
-                <p>O acesso à Deep Web está ativo via SOCKS5.</p>
-            </div>
-        </div>
-    </main>
-</div>
+    <iframe id="viewport" src="https://www.google.com/search?q=Neural+Raphael+Chromium"></iframe>
 
-<script>
-    // JS - Canvas 2D Effect
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
+    <script>
+        /* JavaScript & Canvas 2D - Algoritmo da Logo */
+        const canvas = document.getElementById('logoCanvas');
+        const ctx = canvas.getContext('2d');
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles = [];
-    for(let i = 0; i < 50; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            speed: Math.random() * 2
-        });
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'rgba(255, 0, 85, 0.2)'; // Cor accent
-        particles.forEach(p => {
+        function drawLogo() {
+            const cx = 20, cy = 20, r = 18;
+            
+            // Círculo Central (Preto)
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+            ctx.fillStyle = "#000000";
             ctx.fill();
-            p.y -= p.speed;
-            if(p.y < 0) p.y = canvas.height;
-        });
-        requestAnimationFrame(animate);
-    }
-    animate();
 
-    function navigate() {
-        const url = document.getElementById('urlInput').value;
-        const view = document.getElementById('browserView');
-        view.innerHTML = `<iframe src="https://www.google.com/search?q=${url}&igu=1" style="width:100%; height:100%; border:none;"></iframe>`;
-    }
-</script>
+            // Segmentos (Vermelho Escuro) - Estilo Chromium
+            ctx.strokeStyle = "#8B0000";
+            ctx.lineWidth = 4;
+            for(let i=0; i<3; i++) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, i*2, i*2 + 1.5);
+                ctx.stroke();
+            }
+        }
+        drawLogo();
 
-<!-- 
-    LÓGICA PYTHON (Para o Backend do Repositório):
-    Necessário para criar o túnel de conexão.
+        /* Lógica de Navegação */
+        function handleUrl(e) {
+            if (e.key === 'Enter') {
+                let url = document.getElementById('address-bar').value;
+                if (!url.startsWith('http')) url = 'https://' + url;
+                document.getElementById('viewport').src = url;
+            }
+        }
 
-    import socks
-    import socket
-    import requests
+        function toggleMenu() {
+            const menu = document.getElementById('settings-menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
 
-    def connect_tor():
-        socks.set_default_proxy(socks.SOCKS5, "localhost", 9050)
-        socket.socket = socks.socksocket
-        print("Tráfego agora passa pelo Tor")
--->
+        // Simulação de comandos C++ via Console para integração
+        console.log("Neural-Raphael-Cromium Kernel initialized...");
+        console.log("Connecting to source.chromium.org algorithms...");
+    </script>
 
-<!-- 
-    LÓGICA C++ (Para Performance de Renderização):
-    Integrar via WebAssembly ou Backend.
+    <!-- 
+    ALGORITMO PYTHON PARA INTEGRAÇÃO (COMENTADO PARA RODAR NO GITHUB)
+    Para transformar este HTML em um navegador real no seu PC:
+    
+    import sys
+    from PyQt5.QtWidgets import QApplication, QMainWindow
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
+    from PyQt5.QtCore import QUrl
 
-    #include <iostream>
-    int main() {
-        std::cout << "Engine de renderização NeonTor C++ inicializada." << std::endl;
-        return 0;
-    }
--->
+    class NeuralRaphaelCromium(QMainWindow):
+        def __init__(self):
+            super().__init__()
+            self.browser = QWebEngineView()
+            self.browser.setUrl(QUrl("https://source.chromium.org"))
+            self.setCentralWidget(self.browser)
+            self.setWindowTitle("Neural-Raphael-Cromium v1.0")
 
+    # Para executar, instale: pip install PyQt5 PyQtWebEngine
+    -->
 </body>
 </html>
